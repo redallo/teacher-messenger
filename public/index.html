@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>رسائل المدرسين</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#4f46e5">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    margin: 0; background: #0f172a; color: #fff; min-height: 100vh;
+  }
+  .container { max-width: 480px; margin: 0 auto; padding: 20px; }
+  .card {
+    background: #1e293b; border-radius: 16px; padding: 24px; margin-top: 40px;
+  }
+  h1 { font-size: 22px; text-align: center; margin-bottom: 4px; }
+  p.sub { text-align: center; color: #94a3b8; margin-top: 0; margin-bottom: 24px; font-size: 14px; }
+  input {
+    width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 10px;
+    border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 16px;
+  }
+  button {
+    width: 100%; padding: 14px; border-radius: 10px; border: none;
+    background: #4f46e5; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer;
+  }
+  button:active { background: #4338ca; }
+  .error { color: #f87171; text-align: center; margin-top: 8px; font-size: 14px; }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px; background: #1e293b; position: sticky; top: 0;
+  }
+  .topbar h2 { margin: 0; font-size: 18px; }
+  .topbar button { width: auto; padding: 8px 14px; font-size: 13px; background: #334155; }
+  .msg {
+    background: #1e293b; border-radius: 12px; padding: 16px; margin: 12px 20px;
+    border-right: 4px solid #4f46e5;
+  }
+  .msg.unread { border-right-color: #f59e0b; }
+  .msg h3 { margin: 0 0 6px 0; font-size: 16px; }
+  .msg p { margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.6; }
+  .msg time { color: #64748b; font-size: 12px; display: block; margin-top: 8px; }
+  .empty { text-align: center; color: #64748b; margin-top: 60px; padding: 0 20px; }
+  .badge {
+    display: inline-block; background: #f59e0b; color: #000; font-size: 11px;
+    padding: 2px 8px; border-radius: 20px; margin-right: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div id="login-view" class="container">
+  <div class="card">
+    <h1>📩 رسائل المدرسين</h1>
+    <p class="sub">سجل دخولك مرة واحدة فقط باليوزر والبن كود اللي معاك</p>
+    <input id="username" placeholder="اسم المستخدم (Username)" autocomplete="username">
+    <input id="pin" placeholder="البن كود (PIN)" type="password" inputmode="numeric" autocomplete="current-password">
+    <button onclick="login()">دخول</button>
+    <div id="login-error" class="error"></div>
+  </div>
+</div>
+
+<div id="app-view" style="display:none;">
+  <div class="topbar">
+    <h2 id="teacher-name"></h2>
+    <button onclick="logout()">خروج</button>
+  </div>
+  <div id="messages-list"></div>
+</div>
+
+<script>
+const API = '';
+let token = localStorage.getItem('teacher_token');
+let teacherName = localStorage.getItem('teacher_name');
+
+if (token) showApp();
+
+async function login() {
+  const username = document.getElementById('username').value.trim();
+  const pin = document.getElementById('pin').value.trim();
+  const errBox = document.getElementById('login-error');
+  errBox.textContent = '';
+  if (!username || !pin) { errBox.textContent = 'من فضلك اكتب اليوزر والبن كود'; return; }
+
+  try {
+    const res = await fetch(`${API}/api/teacher/login`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, pin })
+    });
+    const data = await res.json();
+    if (!res.ok) { errBox.textContent = data.error; return; }
+    token = data.token;
+    teacherName = data.name;
+    localStorage.setItem('teacher_token', token);
+    localStorage.setItem('teacher_name', teacherName);
+    showApp();
+  } catch (e) {
+    errBox.textContent = 'حصل خطأ، تأكد من الاتصال بالسيرفر';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('teacher_token');
+  localStorage.removeItem('teacher_name');
+  location.reload();
+}
+
+async function showApp() {
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('app-view').style.display = 'block';
+  document.getElementById('teacher-name').textContent = 'أهلاً، ' + teacherName;
+  await registerPush();
+  loadMessages();
+  setInterval(loadMessages, 20000); // تحديث كل 20 ثانية كخط دفاع تاني غير الـ push
+}
+
+async function loadMessages() {
+  const res = await fetch(`${API}/api/teacher/messages`, {
+    headers: { Authorization: 'Bearer ' + token }
+  });
+  if (res.status === 401) { logout(); return; }
+  const messages = await res.json();
+  const list = document.getElementById('messages-list');
+  if (messages.length === 0) {
+    list.innerHTML = '<div class="empty">مفيش رسائل لسه</div>';
+    return;
+  }
+  list.innerHTML = messages.map(m => `
+    <div class="msg ${m.read_at ? '' : 'unread'}" onclick="markRead(${m.id}, this)">
+      <h3>${m.read_at ? '' : '<span class="badge">جديد</span>'}${escapeHtml(m.title)}</h3>
+      <p>${escapeHtml(m.body)}</p>
+      <time>${new Date(m.created_at).toLocaleString('ar-EG')}</time>
+    </div>
+  `).join('');
+}
+
+async function markRead(id, el) {
+  el.classList.remove('unread');
+  await fetch(`${API}/api/teacher/messages/${id}/read`, {
+    method: 'POST', headers: { Authorization: 'Bearer ' + token }
+  });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ---------- تسجيل Service Worker + الاشتراك في الإشعارات ----------
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function registerPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+
+    const keyRes = await fetch('/api/vapid-public-key');
+    const { key } = await keyRes.json();
+    if (!key) return;
+
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(key)
+      });
+    }
+    await fetch('/api/teacher/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify(sub)
+    });
+  } catch (e) {
+    console.warn('تعذر تفعيل الإشعارات:', e);
+  }
+}
+</script>
+</body>
+</html>

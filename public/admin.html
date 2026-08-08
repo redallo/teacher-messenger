@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة تحكم المديرين</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #f1f5f9; margin: 0; color: #0f172a; }
+  .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+  .card { background: #fff; border-radius: 14px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  h1 { font-size: 20px; }
+  h2 { font-size: 17px; margin-top: 0; }
+  input, textarea, select {
+    width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;
+    margin-bottom: 10px; font-size: 14px; font-family: inherit;
+  }
+  button {
+    padding: 10px 18px; border-radius: 8px; border: none; background: #4f46e5;
+    color: #fff; font-weight: bold; cursor: pointer; font-size: 14px;
+  }
+  button.secondary { background: #64748b; }
+  button.danger { background: #dc2626; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: right; padding: 10px; border-bottom: 1px solid #e2e8f0; }
+  th { color: #64748b; font-weight: 600; }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  .pin-box {
+    background: #ecfdf5; border: 1px solid #6ee7b7; padding: 12px; border-radius: 8px;
+    margin-top: 10px; font-size: 14px;
+  }
+  .error { color: #dc2626; font-size: 13px; }
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .badge { background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 20px; font-size: 12px; }
+  #login-view { max-width: 400px; margin: 60px auto; }
+</style>
+</head>
+<body>
+
+<div id="login-view" class="container">
+  <div class="card">
+    <h1>🔐 دخول المديرين</h1>
+    <input id="a-username" placeholder="اسم المستخدم">
+    <input id="a-password" type="password" placeholder="كلمة المرور">
+    <button style="width:100%" onclick="adminLogin()">دخول</button>
+    <div id="login-err" class="error"></div>
+  </div>
+</div>
+
+<div id="app-view" class="container" style="display:none;">
+  <div class="top">
+    <h1>لوحة تحكم المديرين</h1>
+    <button class="secondary" onclick="logout()">تسجيل خروج</button>
+  </div>
+
+  <div class="card">
+    <h2>✉️ إرسال رسالة</h2>
+    <select id="target">
+      <option value="">لكل المدرسين</option>
+    </select>
+    <input id="m-title" placeholder="عنوان الرسالة">
+    <textarea id="m-body" rows="3" placeholder="نص الرسالة"></textarea>
+    <button onclick="sendMessage()">إرسال الآن</button>
+    <div id="send-status"></div>
+  </div>
+
+  <div class="card">
+    <h2>➕ إضافة مدرس جديد</h2>
+    <div class="row">
+      <input id="t-name" placeholder="اسم المدرس">
+      <input id="t-subject" placeholder="المادة (اختياري)">
+    </div>
+    <input id="t-username" placeholder="اسم مستخدم مخصص (اختياري، هيتولد تلقائي لو سبته فاضي)">
+    <button onclick="addTeacher()">إنشاء يوزر وبن كود</button>
+    <div id="new-teacher-box"></div>
+  </div>
+
+  <div class="card">
+    <h2>👥 المدرسين (<span id="teacher-count">0</span>)</h2>
+    <table>
+      <thead><tr><th>الاسم</th><th>اليوزر</th><th>المادة</th><th>الحالة</th><th></th></tr></thead>
+      <tbody id="teachers-body"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>📜 آخر الرسائل المُرسلة</h2>
+    <table>
+      <thead><tr><th>العنوان</th><th>لمين</th><th>التاريخ</th></tr></thead>
+      <tbody id="messages-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let token = localStorage.getItem('admin_token');
+if (token) showApp();
+
+async function adminLogin() {
+  const username = document.getElementById('a-username').value.trim();
+  const password = document.getElementById('a-password').value;
+  const err = document.getElementById('login-err');
+  err.textContent = '';
+  const res = await fetch('/api/admin/login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+  const data = await res.json();
+  if (!res.ok) { err.textContent = data.error; return; }
+  token = data.token;
+  localStorage.setItem('admin_token', token);
+  showApp();
+}
+
+function logout() {
+  localStorage.removeItem('admin_token');
+  location.reload();
+}
+
+function authHeaders(extra) {
+  return Object.assign({ Authorization: 'Bearer ' + token }, extra || {});
+}
+
+async function showApp() {
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('app-view').style.display = 'block';
+  await loadTeachers();
+  await loadMessages();
+}
+
+async function loadTeachers() {
+  const res = await fetch('/api/admin/teachers', { headers: authHeaders() });
+  if (res.status === 401) return logout();
+  const teachers = await res.json();
+  document.getElementById('teacher-count').textContent = teachers.length;
+
+  document.getElementById('teachers-body').innerHTML = teachers.map(t => `
+    <tr>
+      <td>${escapeHtml(t.name)}</td>
+      <td>${escapeHtml(t.username)}</td>
+      <td>${escapeHtml(t.subject || '-')}</td>
+      <td>${t.logged_in ? '<span class="badge">دخل التطبيق</span>' : 'لسه ما دخلش'}</td>
+      <td>
+        <button class="secondary" onclick="resetPin(${t.id})">إعادة تعيين بن كود</button>
+        <button class="danger" onclick="deleteTeacher(${t.id})">حذف</button>
+      </td>
+    </tr>
+  `).join('');
+
+  const select = document.getElementById('target');
+  select.innerHTML = '<option value="">لكل المدرسين</option>' +
+    teachers.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+}
+
+async function loadMessages() {
+  const res = await fetch('/api/admin/messages', { headers: authHeaders() });
+  const messages = await res.json();
+  document.getElementById('messages-body').innerHTML = messages.map(m => `
+    <tr>
+      <td>${escapeHtml(m.title)}</td>
+      <td>${m.target_name ? escapeHtml(m.target_name) : 'الكل'}</td>
+      <td>${new Date(m.created_at).toLocaleString('ar-EG')}</td>
+    </tr>
+  `).join('');
+}
+
+async function addTeacher() {
+  const name = document.getElementById('t-name').value.trim();
+  const subject = document.getElementById('t-subject').value.trim();
+  const username = document.getElementById('t-username').value.trim();
+  const box = document.getElementById('new-teacher-box');
+  if (!name) { box.innerHTML = '<div class="error">اكتب اسم المدرس</div>'; return; }
+
+  const res = await fetch('/api/admin/teachers', {
+    method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ name, subject, username })
+  });
+  const data = await res.json();
+  if (!res.ok) { box.innerHTML = `<div class="error">${data.error}</div>`; return; }
+
+  box.innerHTML = `
+    <div class="pin-box">
+      ✅ تم الإنشاء. سلّم المدرس البيانات دي (هتظهر مرة واحدة بس):<br>
+      <b>اليوزر:</b> ${data.username} &nbsp; | &nbsp; <b>البن كود:</b> ${data.pin}
+    </div>`;
+  document.getElementById('t-name').value = '';
+  document.getElementById('t-subject').value = '';
+  document.getElementById('t-username').value = '';
+  loadTeachers();
+}
+
+async function resetPin(id) {
+  const res = await fetch(`/api/admin/teachers/${id}/reset-pin`, {
+    method: 'POST', headers: authHeaders()
+  });
+  const data = await res.json();
+  alert('البن كود الجديد: ' + data.pin);
+  loadTeachers();
+}
+
+async function deleteTeacher(id) {
+  if (!confirm('متأكد من حذف المدرس؟')) return;
+  await fetch(`/api/admin/teachers/${id}`, { method: 'DELETE', headers: authHeaders() });
+  loadTeachers();
+}
+
+async function sendMessage() {
+  const title = document.getElementById('m-title').value.trim();
+  const body = document.getElementById('m-body').value.trim();
+  const target = document.getElementById('target').value;
+  const status = document.getElementById('send-status');
+  if (!title || !body) { status.innerHTML = '<div class="error">اكتب العنوان والنص</div>'; return; }
+
+  const res = await fetch('/api/admin/messages', {
+    method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ title, body, target_teacher_id: target || null })
+  });
+  const data = await res.json();
+  if (!res.ok) { status.innerHTML = `<div class="error">${data.error}</div>`; return; }
+
+  status.innerHTML = `<div class="pin-box">✅ اتبعتت. وصل إشعار فوري لـ ${data.notified} من ${data.totalTeachers} مدرس.</div>`;
+  document.getElementById('m-title').value = '';
+  document.getElementById('m-body').value = '';
+  loadMessages();
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
