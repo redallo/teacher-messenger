@@ -19,6 +19,26 @@ router.post('/login', (req, res) => {
   res.json({ token, name: admin.name });
 });
 
+// ---------- تغيير باسورد المدير الحالي ----------
+router.post('/change-password', requireAdmin, (req, res) => {
+  const { current_password, new_password } = req.body;
+  if (!current_password || !new_password) {
+    return res.status(400).json({ error: 'لازم تكتب الباسورد الحالي والجديد' });
+  }
+  if (new_password.length < 6) {
+    return res.status(400).json({ error: 'الباسورد الجديد لازم يكون 6 حروف/أرقام على الأقل' });
+  }
+
+  const admin = db.prepare('SELECT * FROM admins WHERE id = ?').get(req.user.id);
+  if (!admin || !bcrypt.compareSync(current_password, admin.password_hash)) {
+    return res.status(401).json({ error: 'الباسورد الحالي غلط' });
+  }
+
+  const newHash = bcrypt.hashSync(new_password, 10);
+  db.prepare('UPDATE admins SET password_hash = ? WHERE id = ?').run(newHash, req.user.id);
+  res.json({ ok: true });
+});
+
 // ---------- إنشاء مدرس جديد (يوزر + بن كود تلقائي) ----------
 router.post('/teachers', requireAdmin, (req, res) => {
   const { name, subject, username } = req.body;

@@ -91,6 +91,15 @@
       <tbody id="messages-body"></tbody>
     </table>
   </div>
+
+  <div class="card">
+    <h2>🔑 تغيير كلمة المرور</h2>
+    <input id="cp-current" type="password" placeholder="كلمة المرور الحالية">
+    <input id="cp-new" type="password" placeholder="كلمة المرور الجديدة (6 حروف/أرقام على الأقل)">
+    <input id="cp-confirm" type="password" placeholder="تأكيد كلمة المرور الجديدة">
+    <button onclick="changePassword()">حفظ كلمة المرور الجديدة</button>
+    <div id="cp-status"></div>
+  </div>
 </div>
 
 <script>
@@ -223,6 +232,33 @@ async function sendMessage() {
   document.getElementById('m-title').value = '';
   document.getElementById('m-body').value = '';
   loadMessages();
+}
+
+async function changePassword() {
+  const current_password = document.getElementById('cp-current').value;
+  const new_password = document.getElementById('cp-new').value;
+  const confirm_password = document.getElementById('cp-confirm').value;
+  const status = document.getElementById('cp-status');
+  status.innerHTML = '';
+
+  if (!current_password || !new_password || !confirm_password) {
+    status.innerHTML = '<div class="error">املأ كل الحقول</div>'; return;
+  }
+  if (new_password !== confirm_password) {
+    status.innerHTML = '<div class="error">كلمة المرور الجديدة وتأكيدها مش متطابقين</div>'; return;
+  }
+
+  const res = await fetch('/api/admin/change-password', {
+    method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ current_password, new_password })
+  });
+  const data = await res.json();
+  if (!res.ok) { status.innerHTML = `<div class="error">${data.error}</div>`; return; }
+
+  status.innerHTML = '<div class="pin-box">✅ اتغيرت كلمة المرور بنجاح. استخدمها في الدخول من المرة الجاية.</div>';
+  document.getElementById('cp-current').value = '';
+  document.getElementById('cp-new').value = '';
+  document.getElementById('cp-confirm').value = '';
 }
 
 function escapeHtml(str) {
