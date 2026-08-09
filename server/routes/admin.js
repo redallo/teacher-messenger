@@ -157,18 +157,19 @@ router.post('/teachers/:id/reset-pin', requireAdmin, (req, res) => {
 // ---------- إرسال رسالة (لكل المدرسين، لمدرس معين، لكل رؤساء الفروع، أو لرئيس فرع معين) ----------
 router.post('/messages', requireAdmin, upload.single('attachment'), async (req, res) => {
   const { title, body, target_teacher_id, department_id, target_audience, target_branch_head_id } = req.body;
-  if (!title || !body) return res.status(400).json({ error: 'العنوان والنص مطلوبين' });
+  if (!body) return res.status(400).json({ error: 'اكتب نص الرسالة' });
 
   const audience = target_audience === 'branch_heads' ? 'branch_heads' : 'teachers';
   const attachmentPath = req.file ? '/uploads/' + req.file.filename : null;
   const attachmentName = req.file ? req.file.originalname : null;
+  const finalTitle = (title && title.trim()) ? title.trim() : null;
 
   const info = db.prepare(`
     INSERT INTO messages
       (admin_id, title, body, target_teacher_id, department_id, attachment_path, attachment_name, sender_role, sender_id, target_audience, target_branch_head_id)
     VALUES (?, ?, ?, ?, ?, ?, ?, 'admin', ?, ?, ?)
   `).run(
-    req.user.id, title, body,
+    req.user.id, finalTitle, body,
     audience === 'teachers' ? (target_teacher_id || null) : null,
     department_id || null,
     attachmentPath, attachmentName,
@@ -192,7 +193,7 @@ router.post('/messages', requireAdmin, upload.single('attachment'), async (req, 
     if (r.push_subscription) {
       try {
         await webpush.sendNotification(JSON.parse(r.push_subscription), JSON.stringify({
-          title, body, messageId: info.lastInsertRowid
+          title: finalTitle || 'رسالة جديدة', body, messageId: info.lastInsertRowid
         }));
         sent++;
       } catch (e) {

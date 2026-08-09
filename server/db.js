@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS teachers (
 CREATE TABLE IF NOT EXISTS messages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   admin_id INTEGER,
-  title TEXT NOT NULL,
+  title TEXT,
   body TEXT NOT NULL,
   target_teacher_id INTEGER,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,

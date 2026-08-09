@@ -8,45 +8,39 @@
 <meta name="theme-color" content="#4f46e5">
 <style>
   * { box-sizing: border-box; }
-  body {
-    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-    margin: 0; background: #0f172a; color: #fff; min-height: 100vh;
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; margin: 0; background: #f1f5f9; color: #0f172a; min-height: 100vh; }
+  .container { max-width: 640px; margin: 0 auto; padding: 20px; }
+  .card { background: #fff; border-radius: 14px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin-top: 0; }
+  p.sub { color: #64748b; margin-top: 0; margin-bottom: 20px; font-size: 14px; }
+  input, textarea, select {
+    width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px;
+    border: 1px solid #cbd5e1; font-size: 15px; font-family: inherit; background: #fff; color: #0f172a;
   }
-  .container { max-width: 480px; margin: 0 auto; padding: 20px; }
-  .card {
-    background: #1e293b; border-radius: 16px; padding: 24px; margin-top: 40px;
-  }
-  h1 { font-size: 22px; text-align: center; margin-bottom: 4px; }
-  p.sub { text-align: center; color: #94a3b8; margin-top: 0; margin-bottom: 24px; font-size: 14px; }
-  input {
-    width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 10px;
-    border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 16px;
-  }
-  button {
-    width: 100%; padding: 14px; border-radius: 10px; border: none;
-    background: #4f46e5; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer;
-  }
-  button:active { background: #4338ca; }
-  .error { color: #f87171; text-align: center; margin-top: 8px; font-size: 14px; }
-  .topbar {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 20px; background: #1e293b; position: sticky; top: 0;
-  }
-  .topbar h2 { margin: 0; font-size: 18px; }
-  .topbar button { width: auto; padding: 8px 14px; font-size: 13px; background: #334155; }
-  .msg {
-    background: #1e293b; border-radius: 12px; padding: 16px; margin: 12px 20px;
-    border-right: 4px solid #4f46e5;
-  }
+  button { padding: 12px 18px; border-radius: 8px; border: none; background: #4f46e5; color: #fff; font-weight: bold; cursor: pointer; font-size: 14px; }
+  button.secondary { background: #64748b; }
+  button.danger { background: #dc2626; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: right; padding: 10px; border-bottom: 1px solid #e2e8f0; }
+  th { color: #64748b; font-weight: 600; }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  .pin-box { background: #ecfdf5; border: 1px solid #6ee7b7; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 14px; }
+  .error { color: #dc2626; font-size: 13px; }
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .badge { background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 20px; font-size: 12px; }
+  #login-view { max-width: 400px; margin: 60px auto; }
+  .msg { background: #f8fafc; border-radius: 10px; padding: 14px; margin-bottom: 10px; border-right: 4px solid #4f46e5; }
   .msg.unread { border-right-color: #f59e0b; }
-  .msg h3 { margin: 0 0 6px 0; font-size: 16px; }
-  .msg p { margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.6; }
-  .msg time { color: #64748b; font-size: 12px; display: block; margin-top: 8px; }
-  .empty { text-align: center; color: #64748b; margin-top: 60px; padding: 0 20px; }
-  .badge {
-    display: inline-block; background: #f59e0b; color: #000; font-size: 11px;
-    padding: 2px 8px; border-radius: 20px; margin-right: 6px;
-  }
+  .msg p { margin: 0; color: #334155; font-size: 14px; line-height: 1.6; }
+  .msg time { color: #94a3b8; font-size: 12px; display: block; margin-top: 8px; }
+  .msg a.attach { display: inline-block; margin-top: 8px; font-size: 13px; color: #4f46e5; }
+  .empty { text-align: center; color: #94a3b8; padding: 20px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tabs button { flex: 1; background: #e2e8f0; color: #0f172a; }
+  .tabs button.active { background: #4f46e5; color: #fff; }
+  .my-dept { background: #eef2ff; color: #4338ca; padding: 8px 12px; border-radius: 8px; font-size: 14px; margin-bottom: 10px; }
 </style>
 </head>
 <body>
@@ -54,94 +48,180 @@
 <div id="login-view" class="container">
   <div class="card">
     <h1>📩 رسائل المدرسين</h1>
-    <p class="sub">سجل دخولك مرة واحدة فقط باليوزر والبن كود اللي معاك</p>
-    <input id="username" placeholder="اسم المستخدم (Username)" autocomplete="username">
-    <input id="pin" placeholder="البن كود (PIN)" type="password" autocomplete="current-password">
-    <button onclick="login()">دخول</button>
+    <p class="sub">سجل دخولك باليوزر وكلمة المرور اللي معاك</p>
+    <input id="username" placeholder="اسم المستخدم" autocomplete="username">
+    <input id="password" type="password" placeholder="كلمة المرور" autocomplete="current-password">
+    <button style="width:100%" onclick="doLogin()">دخول</button>
     <div id="login-error" class="error"></div>
   </div>
 </div>
 
-<div id="app-view" style="display:none;">
-  <div class="topbar">
-    <h2 id="teacher-name"></h2>
-    <button onclick="logout()">خروج</button>
+<!-- ============ واجهة المدرس ============ -->
+<div id="teacher-view" class="container" style="display:none;">
+  <div class="top">
+    <h1 id="teacher-name">-</h1>
+    <button class="secondary" onclick="logout()">خروج</button>
   </div>
-  <div id="messages-list"></div>
+  <div class="card"><div id="teacher-messages-list"></div></div>
+</div>
+
+<!-- ============ واجهة رئيس الفرع/القسم ============ -->
+<div id="branch-view" class="container" style="display:none;">
+  <div class="top">
+    <h1 id="branch-name">-</h1>
+    <button class="secondary" onclick="logout()">خروج</button>
+  </div>
+
+  <div class="card">
+    <h2>✉️ إرسال رسالة للمدرسين</h2>
+    <div id="branch-my-dept" class="my-dept" style="display:none;"></div>
+    <select id="b-target"><option value="">لكل المدرسين</option></select>
+    <textarea id="b-body" rows="3" placeholder="نص الرسالة"></textarea>
+    <input id="b-attachment" type="file">
+    <button onclick="branchSendMessage()">إرسال</button>
+    <div id="branch-send-status"></div>
+  </div>
+
+  <div class="tabs">
+    <button id="tab-inbox" class="active" onclick="branchSwitchTab('inbox')">📥 الوارد من الإدارة</button>
+    <button id="tab-sent" onclick="branchSwitchTab('sent')">📤 رسائلي المرسلة</button>
+  </div>
+  <div class="card" id="inbox-card"><div id="inbox-list"></div></div>
+  <div class="card" id="sent-card" style="display:none;"><div id="sent-list"></div></div>
+
+  <div class="card">
+    <h2>🔑 تغيير كلمة المرور</h2>
+    <input id="b-cp-current" type="password" placeholder="كلمة المرور الحالية">
+    <input id="b-cp-new" type="password" placeholder="كلمة المرور الجديدة">
+    <input id="b-cp-confirm" type="password" placeholder="تأكيد كلمة المرور الجديدة">
+    <button onclick="branchChangePassword()">حفظ</button>
+    <div id="b-cp-status"></div>
+  </div>
+</div>
+
+<!-- ============ واجهة المدير ============ -->
+<div id="admin-view" class="container" style="display:none;">
+  <div class="top">
+    <h1>لوحة تحكم المديرين</h1>
+    <button class="secondary" onclick="logout()">خروج</button>
+  </div>
+
+  <div class="card">
+    <h2>✉️ إرسال رسالة</h2>
+    <select id="target-audience" onchange="onAudienceChange()">
+      <option value="teachers">للمدرسين</option>
+      <option value="branch_heads">لرؤساء الفروع/الأقسام</option>
+    </select>
+    <select id="target"><option value="">لكل المدرسين</option></select>
+    <select id="m-department"><option value="">بدون تصنيف فرع/قسم</option></select>
+    <textarea id="m-body" rows="3" placeholder="نص الرسالة"></textarea>
+    <input id="m-attachment" type="file">
+    <button onclick="adminSendMessage()">إرسال الآن</button>
+    <div id="send-status"></div>
+  </div>
+
+  <div class="card">
+    <h2>🏷️ الفروع والأقسام</h2>
+    <div class="row">
+      <input id="dept-name" placeholder="اسم فرع/قسم جديد">
+      <button style="flex:0 0 auto" onclick="addDepartment()">إضافة</button>
+    </div>
+    <div id="dept-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>🏢 رؤساء الفروع/الأقسام</h2>
+    <div class="row">
+      <input id="bh-name" placeholder="اسم رئيس الفرع/القسم">
+      <select id="bh-department"><option value="">بدون فرع/قسم محدد</option></select>
+    </div>
+    <input id="bh-username" placeholder="اسم مستخدم مخصص (اختياري)">
+    <button onclick="addBranchHead()">إنشاء حساب رئيس فرع</button>
+    <div id="new-bh-box"></div>
+    <table>
+      <thead><tr><th>الاسم</th><th>اليوزر</th><th>الفرع/القسم</th><th></th></tr></thead>
+      <tbody id="bh-body"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>➕ إضافة مدرس جديد</h2>
+    <div class="row">
+      <input id="t-name" placeholder="اسم المدرس">
+      <input id="t-subject" placeholder="المادة (اختياري)">
+    </div>
+    <input id="t-username" placeholder="اسم مستخدم مخصص (اختياري، هيتولد تلقائي لو سبته فاضي)">
+    <button onclick="addTeacher()">إنشاء يوزر وبن كود</button>
+    <div id="new-teacher-box"></div>
+  </div>
+
+  <div class="card">
+    <h2>👥 المدرسين (<span id="teacher-count">0</span>)</h2>
+    <table>
+      <thead><tr><th>الاسم</th><th>اليوزر</th><th>المادة</th><th>الحالة</th><th></th></tr></thead>
+      <tbody id="teachers-body"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>📜 آخر الرسائل المُرسلة</h2>
+    <table>
+      <thead><tr><th>الرسالة</th><th>لمين</th><th>التاريخ</th></tr></thead>
+      <tbody id="messages-body"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>🔑 تغيير كلمة المرور</h2>
+    <input id="cp-current" type="password" placeholder="كلمة المرور الحالية">
+    <input id="cp-new" type="password" placeholder="كلمة المرور الجديدة (6 حروف/أرقام على الأقل)">
+    <input id="cp-confirm" type="password" placeholder="تأكيد كلمة المرور الجديدة">
+    <button onclick="adminChangePassword()">حفظ كلمة المرور الجديدة</button>
+    <div id="cp-status"></div>
+  </div>
 </div>
 
 <script>
-const API = '';
-let token = localStorage.getItem('teacher_token');
-let teacherName = localStorage.getItem('teacher_name');
+let token = localStorage.getItem('app_token');
+let role = localStorage.getItem('app_role');
+let userName = localStorage.getItem('app_name');
 
-if (token) showApp();
+if (token && role) showAppForRole();
 
-async function login() {
+// ---------- تسجيل الدخول الموحد ----------
+async function doLogin() {
   const username = document.getElementById('username').value.trim();
-  const pin = document.getElementById('pin').value.trim();
+  const password = document.getElementById('password').value;
   const errBox = document.getElementById('login-error');
   errBox.textContent = '';
-  if (!username || !pin) { errBox.textContent = 'من فضلك اكتب اليوزر والبن كود'; return; }
+  if (!username || !password) { errBox.textContent = 'من فضلك اكتب اليوزر وكلمة المرور'; return; }
 
   try {
-    const res = await fetch(`${API}/api/teacher/login`, {
+    const res = await fetch('/api/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, pin })
+      body: JSON.stringify({ username, password })
     });
     const data = await res.json();
     if (!res.ok) { errBox.textContent = data.error; return; }
-    token = data.token;
-    teacherName = data.name;
-    localStorage.setItem('teacher_token', token);
-    localStorage.setItem('teacher_name', teacherName);
-    showApp();
+    token = data.token; role = data.role; userName = data.name;
+    localStorage.setItem('app_token', token);
+    localStorage.setItem('app_role', role);
+    localStorage.setItem('app_name', userName);
+    showAppForRole();
   } catch (e) {
     errBox.textContent = 'حصل خطأ، تأكد من الاتصال بالسيرفر';
   }
 }
 
 function logout() {
-  localStorage.removeItem('teacher_token');
-  localStorage.removeItem('teacher_name');
+  localStorage.removeItem('app_token');
+  localStorage.removeItem('app_role');
+  localStorage.removeItem('app_name');
   location.reload();
 }
 
-async function showApp() {
-  document.getElementById('login-view').style.display = 'none';
-  document.getElementById('app-view').style.display = 'block';
-  document.getElementById('teacher-name').textContent = 'أهلاً، ' + teacherName;
-  await registerPush();
-  loadMessages();
-  setInterval(loadMessages, 20000); // تحديث كل 20 ثانية كخط دفاع تاني غير الـ push
-}
-
-async function loadMessages() {
-  const res = await fetch(`${API}/api/teacher/messages`, {
-    headers: { Authorization: 'Bearer ' + token }
-  });
-  if (res.status === 401) { logout(); return; }
-  const messages = await res.json();
-  const list = document.getElementById('messages-list');
-  if (messages.length === 0) {
-    list.innerHTML = '<div class="empty">مفيش رسائل لسه</div>';
-    return;
-  }
-  list.innerHTML = messages.map(m => `
-    <div class="msg ${m.read_at ? '' : 'unread'}" onclick="markRead(${m.id}, this)">
-      <h3>${m.read_at ? '' : '<span class="badge">جديد</span>'}${escapeHtml(m.title)}</h3>
-      <p>${escapeHtml(m.body)}</p>
-      ${m.attachment_path ? `<a href="${m.attachment_path}" target="_blank" style="display:inline-block;margin-top:8px;color:#818cf8;font-size:13px" onclick="event.stopPropagation()">📎 ${escapeHtml(m.attachment_name || 'مرفق')}</a>` : ''}
-      <time>${new Date(m.created_at).toLocaleString('ar-EG')}${m.department_name ? ' · ' + escapeHtml(m.department_name) : ''}</time>
-    </div>
-  `).join('');
-}
-
-async function markRead(id, el) {
-  el.classList.remove('unread');
-  await fetch(`${API}/api/teacher/messages/${id}/read`, {
-    method: 'POST', headers: { Authorization: 'Bearer ' + token }
-  });
+function authHeaders(extra) {
+  return Object.assign({ Authorization: 'Bearer ' + token }, extra || {});
 }
 
 function escapeHtml(str) {
@@ -150,7 +230,6 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// ---------- تسجيل Service Worker + الاشتراك في الإشعارات ----------
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -158,32 +237,409 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
 
-async function registerPush() {
+async function registerPush(subscribeEndpoint) {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
   try {
     const reg = await navigator.serviceWorker.register('/sw.js');
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') return;
-
     const keyRes = await fetch('/api/vapid-public-key');
     const { key } = await keyRes.json();
     if (!key) return;
-
     let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(key)
-      });
-    }
-    await fetch('/api/teacher/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) });
+    await fetch(subscribeEndpoint, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
       body: JSON.stringify(sub)
     });
-  } catch (e) {
-    console.warn('تعذر تفعيل الإشعارات:', e);
+  } catch (e) { console.warn('تعذر تفعيل الإشعارات:', e); }
+}
+
+function showAppForRole() {
+  document.getElementById('login-view').style.display = 'none';
+  if (role === 'teacher') { showTeacherApp(); }
+  else if (role === 'branch_head') { showBranchApp(); }
+  else if (role === 'admin') { showAdminApp(); }
+  else { logout(); }
+}
+
+/* ======================================================================
+   واجهة المدرس
+   ====================================================================== */
+async function showTeacherApp() {
+  document.getElementById('teacher-view').style.display = 'block';
+  document.getElementById('teacher-name').textContent = 'أهلاً، ' + userName;
+  await registerPush('/api/teacher/subscribe');
+  loadTeacherMessages();
+  setInterval(loadTeacherMessages, 20000);
+}
+
+async function loadTeacherMessages() {
+  const res = await fetch('/api/teacher/messages', { headers: authHeaders() });
+  if (res.status === 401) { logout(); return; }
+  const messages = await res.json();
+  const list = document.getElementById('teacher-messages-list');
+  if (messages.length === 0) { list.innerHTML = '<div class="empty">مفيش رسائل لسه</div>'; return; }
+  list.innerHTML = messages.map(m => `
+    <div class="msg ${m.read_at ? '' : 'unread'}" onclick="markTeacherRead(${m.id}, this)">
+      ${m.read_at ? '' : '<span class="badge">جديد</span>'}
+      <p>${escapeHtml(m.body)}</p>
+      ${m.attachment_path ? `<a class="attach" href="${m.attachment_path}" target="_blank" onclick="event.stopPropagation()">📎 ${escapeHtml(m.attachment_name || 'مرفق')}</a>` : ''}
+      <time>${new Date(m.created_at).toLocaleString('ar-EG')}${m.department_name ? ' · ' + escapeHtml(m.department_name) : ''}</time>
+    </div>
+  `).join('');
+}
+
+async function markTeacherRead(id, el) {
+  el.classList.remove('unread');
+  await fetch(`/api/teacher/messages/${id}/read`, { method: 'POST', headers: authHeaders() });
+}
+
+/* ======================================================================
+   واجهة رئيس الفرع/القسم
+   ====================================================================== */
+async function showBranchApp() {
+  document.getElementById('branch-view').style.display = 'block';
+  document.getElementById('branch-name').textContent = 'أهلاً، ' + userName;
+  await registerPush('/api/branch/subscribe');
+  await branchLoadTeachers();
+  await branchLoadInbox();
+  await branchLoadSent();
+  setInterval(branchLoadInbox, 20000);
+}
+
+function branchShowMyDept() {
+  const box = document.getElementById('branch-my-dept');
+  if (window._branchDeptName) {
+    box.style.display = 'block';
+    box.textContent = '🏷️ رسائلك هتتصنف تلقائيًا تحت: ' + window._branchDeptName;
   }
+}
+
+async function branchLoadTeachers() {
+  const res = await fetch('/api/branch/teachers', { headers: authHeaders() });
+  if (res.status === 401) return logout();
+  const teachers = await res.json();
+  document.getElementById('b-target').innerHTML = '<option value="">لكل المدرسين</option>' +
+    teachers.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+}
+
+function branchSwitchTab(tab) {
+  document.getElementById('tab-inbox').classList.toggle('active', tab === 'inbox');
+  document.getElementById('tab-sent').classList.toggle('active', tab === 'sent');
+  document.getElementById('inbox-card').style.display = tab === 'inbox' ? 'block' : 'none';
+  document.getElementById('sent-card').style.display = tab === 'sent' ? 'block' : 'none';
+}
+
+async function branchLoadInbox() {
+  const res = await fetch('/api/branch/messages', { headers: authHeaders() });
+  const messages = await res.json();
+  const list = document.getElementById('inbox-list');
+  if (messages.length === 0) { list.innerHTML = '<div class="empty">مفيش رسائل واردة من الإدارة لسه</div>'; return; }
+  list.innerHTML = messages.map(m => `
+    <div class="msg ${m.read_at ? '' : 'unread'}" onclick="branchMarkRead(${m.id}, this)">
+      <p>${escapeHtml(m.body)}</p>
+      ${m.attachment_path ? `<a class="attach" href="${m.attachment_path}" target="_blank" onclick="event.stopPropagation()">📎 ${escapeHtml(m.attachment_name || 'مرفق')}</a>` : ''}
+      <time>${new Date(m.created_at).toLocaleString('ar-EG')}${m.department_name ? ' · ' + escapeHtml(m.department_name) : ''}</time>
+    </div>
+  `).join('');
+}
+
+async function branchMarkRead(id, el) {
+  el.classList.remove('unread');
+  await fetch(`/api/branch/messages/${id}/read`, { method: 'POST', headers: authHeaders() });
+}
+
+async function branchLoadSent() {
+  const res = await fetch('/api/branch/sent-messages', { headers: authHeaders() });
+  const messages = await res.json();
+  const list = document.getElementById('sent-list');
+  if (messages.length === 0) { list.innerHTML = '<div class="empty">لسه ما بعتش أي رسائل</div>'; return; }
+  if (messages[0].department_name) window._branchDeptName = messages[0].department_name;
+  list.innerHTML = messages.map(m => `
+    <div class="msg">
+      <p>${escapeHtml(m.body)}</p>
+      ${m.attachment_path ? `<a class="attach" href="${m.attachment_path}" target="_blank">📎 ${escapeHtml(m.attachment_name || 'مرفق')}</a>` : ''}
+      <time>${new Date(m.created_at).toLocaleString('ar-EG')} · لـ ${m.target_name ? escapeHtml(m.target_name) : 'كل المدرسين'}${m.department_name ? ' · ' + escapeHtml(m.department_name) : ''}</time>
+    </div>
+  `).join('');
+  branchShowMyDept();
+}
+
+async function branchSendMessage() {
+  const body = document.getElementById('b-body').value.trim();
+  const target = document.getElementById('b-target').value;
+  const fileInput = document.getElementById('b-attachment');
+  const status = document.getElementById('branch-send-status');
+  if (!body) { status.innerHTML = '<div class="error">اكتب نص الرسالة</div>'; return; }
+
+  const formData = new FormData();
+  formData.append('body', body);
+  if (target) formData.append('target_teacher_id', target);
+  if (fileInput.files[0]) formData.append('attachment', fileInput.files[0]);
+
+  const res = await fetch('/api/branch/messages', {
+    method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: formData
+  });
+  const data = await res.json();
+  if (!res.ok) { status.innerHTML = `<div class="error">${data.error}</div>`; return; }
+
+  status.innerHTML = `<div class="pin-box">✅ اتبعتت. وصل إشعار فوري لـ ${data.notified} من ${data.totalTeachers} مدرس.</div>`;
+  document.getElementById('b-body').value = '';
+  fileInput.value = '';
+  branchLoadSent();
+}
+
+async function branchChangePassword() {
+  const current_password = document.getElementById('b-cp-current').value;
+  const new_password = document.getElementById('b-cp-new').value;
+  const confirm_password = document.getElementById('b-cp-confirm').value;
+  const status = document.getElementById('b-cp-status');
+  status.innerHTML = '';
+  if (!current_password || !new_password || !confirm_password) { status.innerHTML = '<div class="error">املأ كل الحقول</div>'; return; }
+  if (new_password !== confirm_password) { status.innerHTML = '<div class="error">كلمة المرور الجديدة وتأكيدها مش متطابقين</div>'; return; }
+
+  const res = await fetch('/api/branch/change-password', {
+    method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ current_password, new_password })
+  });
+  const data = await res.json();
+  if (!res.ok) { status.innerHTML = `<div class="error">${data.error}</div>`; return; }
+  status.innerHTML = '<div class="pin-box">✅ اتغيرت كلمة المرور بنجاح.</div>';
+  document.getElementById('b-cp-current').value = '';
+  document.getElementById('b-cp-new').value = '';
+  document.getElementById('b-cp-confirm').value = '';
+}
+
+/* ======================================================================
+   واجهة المدير
+   ====================================================================== */
+async function showAdminApp() {
+  document.getElementById('admin-view').style.display = 'block';
+  await loadTeachers();
+  await loadDepartments();
+  await loadBranchHeads();
+  await loadAdminMessages();
+}
+
+async function loadTeachers() {
+  const res = await fetch('/api/admin/teachers', { headers: authHeaders() });
+  if (res.status === 401) return logout();
+  const teachers = await res.json();
+  document.getElementById('teacher-count').textContent = teachers.length;
+
+  document.getElementById('teachers-body').innerHTML = teachers.map(t => `
+    <tr>
+      <td>${escapeHtml(t.name)}</td>
+      <td>${escapeHtml(t.username)}</td>
+      <td>${escapeHtml(t.subject || '-')}</td>
+      <td>${t.logged_in ? '<span class="badge">دخل التطبيق</span>' : 'لسه ما دخلش'}</td>
+      <td>
+        <button class="secondary" onclick="resetPin(${t.id})">إعادة تعيين بن كود</button>
+        <button class="danger" onclick="deleteTeacher(${t.id})">حذف</button>
+      </td>
+    </tr>
+  `).join('');
+
+  window._teacherOptions = teachers.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+  if (document.getElementById('target-audience').value !== 'branch_heads') {
+    document.getElementById('target').innerHTML = '<option value="">لكل المدرسين</option>' + window._teacherOptions;
+  }
+}
+
+async function loadAdminMessages() {
+  const res = await fetch('/api/admin/messages', { headers: authHeaders() });
+  const messages = await res.json();
+  document.getElementById('messages-body').innerHTML = messages.map(m => `
+    <tr>
+      <td>${escapeHtml(m.body.slice(0, 40))}${m.body.length > 40 ? '…' : ''}${m.attachment_path ? ' 📎' : ''}</td>
+      <td>${m.target_audience === 'branch_heads' ? (m.target_branch_head_name ? escapeHtml(m.target_branch_head_name) : 'كل رؤساء الفروع') : (m.target_name ? escapeHtml(m.target_name) : 'كل المدرسين')}${m.department_name ? ' · ' + escapeHtml(m.department_name) : ''}</td>
+      <td>${new Date(m.created_at).toLocaleString('ar-EG')}</td>
+    </tr>
+  `).join('');
+}
+
+async function addTeacher() {
+  const name = document.getElementById('t-name').value.trim();
+  const subject = document.getElementById('t-subject').value.trim();
+  const username = document.getElementById('t-username').value.trim();
+  const box = document.getElementById('new-teacher-box');
+  if (!name) { box.innerHTML = '<div class="error">اكتب اسم المدرس</div>'; return; }
+
+  const res = await fetch('/api/admin/teachers', {
+    method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ name, subject, username })
+  });
+  const data = await res.json();
+  if (!res.ok) { box.innerHTML = `<div class="error">${data.error}</div>`; return; }
+
+  box.innerHTML = `<div class="pin-box">✅ تم الإنشاء. سلّم المدرس البيانات دي (هتظهر مرة واحدة بس):<br><b>اليوزر:</b> ${data.username} &nbsp; | &nbsp; <b>البن كود:</b> ${data.pin}</div>`;
+  document.getElementById('t-name').value = '';
+  document.getElementById('t-subject').value = '';
+  document.getElementById('t-username').value = '';
+  loadTeachers();
+}
+
+async function resetPin(id) {
+  const res = await fetch(`/api/admin/teachers/${id}/reset-pin`, { method: 'POST', headers: authHeaders() });
+  const data = await res.json();
+  alert('البن كود الجديد: ' + data.pin);
+  loadTeachers();
+}
+
+async function deleteTeacher(id) {
+  if (!confirm('متأكد من حذف المدرس؟')) return;
+  await fetch(`/api/admin/teachers/${id}`, { method: 'DELETE', headers: authHeaders() });
+  loadTeachers();
+}
+
+function onAudienceChange() {
+  const audience = document.getElementById('target-audience').value;
+  const targetSelect = document.getElementById('target');
+  if (audience === 'teachers') {
+    targetSelect.innerHTML = '<option value="">لكل المدرسين</option>' + window._teacherOptions;
+  } else {
+    targetSelect.innerHTML = '<option value="">لكل رؤساء الفروع/الأقسام</option>' + window._branchHeadOptions;
+  }
+}
+
+async function adminSendMessage() {
+  const body = document.getElementById('m-body').value.trim();
+  const audience = document.getElementById('target-audience').value;
+  const target = document.getElementById('target').value;
+  const department = document.getElementById('m-department').value;
+  const fileInput = document.getElementById('m-attachment');
+  const status = document.getElementById('send-status');
+  if (!body) { status.innerHTML = '<div class="error">اكتب نص الرسالة</div>'; return; }
+
+  const formData = new FormData();
+  formData.append('body', body);
+  formData.append('target_audience', audience);
+  if (department) formData.append('department_id', department);
+  if (audience === 'teachers' && target) formData.append('target_teacher_id', target);
+  if (audience === 'branch_heads' && target) formData.append('target_branch_head_id', target);
+  if (fileInput.files[0]) formData.append('attachment', fileInput.files[0]);
+
+  const res = await fetch('/api/admin/messages', {
+    method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: formData
+  });
+  const data = await res.json();
+  if (!res.ok) { status.innerHTML = `<div class="error">${data.error}</div>`; return; }
+
+  status.innerHTML = `<div class="pin-box">✅ اتبعتت. وصل إشعار فوري لـ ${data.notified} من ${data.totalRecipients}.</div>`;
+  document.getElementById('m-body').value = '';
+  fileInput.value = '';
+  loadAdminMessages();
+}
+
+async function loadDepartments() {
+  const res = await fetch('/api/admin/departments', { headers: authHeaders() });
+  const depts = await res.json();
+  const opts = depts.map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('');
+
+  document.getElementById('m-department').innerHTML = '<option value="">بدون تصنيف فرع/قسم</option>' + opts;
+  document.getElementById('bh-department').innerHTML = '<option value="">بدون فرع/قسم محدد</option>' + opts;
+
+  document.getElementById('dept-list').innerHTML = depts.map(d => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:14px;">
+      <span>${escapeHtml(d.name)}</span>
+      <button class="danger" style="padding:4px 10px;font-size:12px" onclick="deleteDepartment(${d.id})">حذف</button>
+    </div>
+  `).join('') || '<div style="color:#94a3b8;font-size:14px">مفيش فروع/أقسام مضافة</div>';
+}
+
+async function addDepartment() {
+  const name = document.getElementById('dept-name').value.trim();
+  if (!name) return;
+  const res = await fetch('/api/admin/departments', {
+    method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ name })
+  });
+  const data = await res.json();
+  if (!res.ok) { alert(data.error); return; }
+  document.getElementById('dept-name').value = '';
+  loadDepartments();
+}
+
+async function deleteDepartment(id) {
+  if (!confirm('حذف الفرع/القسم ده؟')) return;
+  await fetch(`/api/admin/departments/${id}`, { method: 'DELETE', headers: authHeaders() });
+  loadDepartments();
+}
+
+async function loadBranchHeads() {
+  const res = await fetch('/api/admin/branch-heads', { headers: authHeaders() });
+  const heads = await res.json();
+  window._branchHeadOptions = heads.map(h => `<option value="${h.id}">${escapeHtml(h.name)}</option>`).join('');
+
+  document.getElementById('bh-body').innerHTML = heads.map(h => `
+    <tr>
+      <td>${escapeHtml(h.name)}</td>
+      <td>${escapeHtml(h.username)}</td>
+      <td>${h.department_name ? escapeHtml(h.department_name) : '-'}</td>
+      <td>
+        <button class="secondary" onclick="resetBranchHeadPassword(${h.id})">إعادة تعيين الباسورد</button>
+        <button class="danger" onclick="deleteBranchHead(${h.id})">حذف</button>
+      </td>
+    </tr>
+  `).join('');
+
+  if (document.getElementById('target-audience').value === 'branch_heads') onAudienceChange();
+}
+
+async function addBranchHead() {
+  const name = document.getElementById('bh-name').value.trim();
+  const department_id = document.getElementById('bh-department').value;
+  const username = document.getElementById('bh-username').value.trim();
+  const box = document.getElementById('new-bh-box');
+  if (!name) { box.innerHTML = '<div class="error">اكتب الاسم</div>'; return; }
+
+  const res = await fetch('/api/admin/branch-heads', {
+    method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ name, department_id, username })
+  });
+  const data = await res.json();
+  if (!res.ok) { box.innerHTML = `<div class="error">${data.error}</div>`; return; }
+
+  box.innerHTML = `<div class="pin-box">✅ تم الإنشاء. سلّمه البيانات دي (هتظهر مرة واحدة بس):<br><b>اليوزر:</b> ${data.username} &nbsp; | &nbsp; <b>الباسورد:</b> ${data.password}</div>`;
+  document.getElementById('bh-name').value = '';
+  document.getElementById('bh-username').value = '';
+  loadBranchHeads();
+}
+
+async function resetBranchHeadPassword(id) {
+  const res = await fetch(`/api/admin/branch-heads/${id}/reset-password`, { method: 'POST', headers: authHeaders() });
+  const data = await res.json();
+  alert('الباسورد الجديد: ' + data.password);
+  loadBranchHeads();
+}
+
+async function deleteBranchHead(id) {
+  if (!confirm('متأكد من حذف رئيس الفرع/القسم ده؟')) return;
+  await fetch(`/api/admin/branch-heads/${id}`, { method: 'DELETE', headers: authHeaders() });
+  loadBranchHeads();
+}
+
+async function adminChangePassword() {
+  const current_password = document.getElementById('cp-current').value;
+  const new_password = document.getElementById('cp-new').value;
+  const confirm_password = document.getElementById('cp-confirm').value;
+  const status = document.getElementById('cp-status');
+  status.innerHTML = '';
+  if (!current_password || !new_password || !confirm_password) { status.innerHTML = '<div class="error">املأ كل الحقول</div>'; return; }
+  if (new_password !== confirm_password) { status.innerHTML = '<div class="error">كلمة المرور الجديدة وتأكيدها مش متطابقين</div>'; return; }
+
+  const res = await fetch('/api/admin/change-password', {
+    method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ current_password, new_password })
+  });
+  const data = await res.json();
+  if (!res.ok) { status.innerHTML = `<div class="error">${data.error}</div>`; return; }
+
+  status.innerHTML = '<div class="pin-box">✅ اتغيرت كلمة المرور بنجاح.</div>';
+  document.getElementById('cp-current').value = '';
+  document.getElementById('cp-new').value = '';
+  document.getElementById('cp-confirm').value = '';
 }
 </script>
 </body>

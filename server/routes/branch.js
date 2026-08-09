@@ -52,10 +52,13 @@ router.get('/teachers', requireBranchHead, (req, res) => {
   res.json(db.prepare('SELECT id, name, subject FROM teachers ORDER BY name').all());
 });
 
-// ---------- إرسال رسالة للمدرسين (فقط - صلاحية محدودة) ----------
+// ---------- إرسال رسالة للمدرسين (فقط - صلاحية محدودة، القسم بيتحدد تلقائيًا من قسم رئيس الفرع) ----------
 router.post('/messages', requireBranchHead, upload.single('attachment'), async (req, res) => {
-  const { title, body, target_teacher_id, department_id } = req.body;
-  if (!title || !body) return res.status(400).json({ error: 'العنوان والنص مطلوبين' });
+  const { body, target_teacher_id } = req.body;
+  if (!body) return res.status(400).json({ error: 'اكتب نص الرسالة' });
+
+  const sender = db.prepare('SELECT * FROM branch_heads WHERE id = ?').get(req.user.id);
+  const departmentId = sender ? sender.department_id : null;
 
   const attachmentPath = req.file ? '/uploads/' + req.file.filename : null;
   const attachmentName = req.file ? req.file.originalname : null;
@@ -63,8 +66,8 @@ router.post('/messages', requireBranchHead, upload.single('attachment'), async (
   const info = db.prepare(`
     INSERT INTO messages
       (admin_id, title, body, target_teacher_id, department_id, attachment_path, attachment_name, sender_role, sender_id, target_audience)
-    VALUES (NULL, ?, ?, ?, ?, ?, ?, 'branch_head', ?, 'teachers')
-  `).run(title, body, target_teacher_id || null, department_id || null, attachmentPath, attachmentName, req.user.id);
+    VALUES (NULL, NULL, ?, ?, ?, ?, ?, 'branch_head', ?, 'teachers')
+  `).run(body, target_teacher_id || null, departmentId, attachmentPath, attachmentName, req.user.id);
 
   const teachers = target_teacher_id
     ? db.prepare('SELECT * FROM teachers WHERE id = ?').all(target_teacher_id)
@@ -75,7 +78,7 @@ router.post('/messages', requireBranchHead, upload.single('attachment'), async (
     if (t.push_subscription) {
       try {
         await webpush.sendNotification(JSON.parse(t.push_subscription), JSON.stringify({
-          title, body, messageId: info.lastInsertRowid
+          title: (sender && sender.name) ? ('رسالة من ' + sender.name) : 'رسالة جديدة', body, messageId: info.lastInsertRowid
         }));
         sent++;
       } catch (e) { /* تجاهل الاشتراكات المنتهية */ }
