@@ -56,13 +56,47 @@
 
   <div class="card">
     <h2>✉️ إرسال رسالة</h2>
+    <select id="target-audience" onchange="onAudienceChange()">
+      <option value="teachers">للمدرسين</option>
+      <option value="branch_heads">لرؤساء الفروع/الأقسام</option>
+    </select>
     <select id="target">
       <option value="">لكل المدرسين</option>
     </select>
+    <select id="m-department">
+      <option value="">بدون تصنيف فرع/قسم</option>
+    </select>
     <input id="m-title" placeholder="عنوان الرسالة">
     <textarea id="m-body" rows="3" placeholder="نص الرسالة"></textarea>
+    <input id="m-attachment" type="file">
     <button onclick="sendMessage()">إرسال الآن</button>
     <div id="send-status"></div>
+  </div>
+
+  <div class="card">
+    <h2>🏷️ الفروع والأقسام</h2>
+    <div class="row">
+      <input id="dept-name" placeholder="اسم فرع/قسم جديد">
+      <button style="flex:0 0 auto" onclick="addDepartment()">إضافة</button>
+    </div>
+    <div id="dept-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>🏢 رؤساء الفروع/الأقسام</h2>
+    <div class="row">
+      <input id="bh-name" placeholder="اسم رئيس الفرع/القسم">
+      <select id="bh-department">
+        <option value="">بدون فرع/قسم محدد</option>
+      </select>
+    </div>
+    <input id="bh-username" placeholder="اسم مستخدم مخصص (اختياري)">
+    <button onclick="addBranchHead()">إنشاء حساب رئيس فرع</button>
+    <div id="new-bh-box"></div>
+    <table>
+      <thead><tr><th>الاسم</th><th>اليوزر</th><th>الفرع/القسم</th><th></th></tr></thead>
+      <tbody id="bh-body"></tbody>
+    </table>
   </div>
 
   <div class="card">
@@ -135,6 +169,8 @@ async function showApp() {
   document.getElementById('login-view').style.display = 'none';
   document.getElementById('app-view').style.display = 'block';
   await loadTeachers();
+  await loadDepartments();
+  await loadBranchHeads();
   await loadMessages();
 }
 
@@ -158,8 +194,10 @@ async function loadTeachers() {
   `).join('');
 
   const select = document.getElementById('target');
-  select.innerHTML = '<option value="">لكل المدرسين</option>' +
-    teachers.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+  window._teacherOptions = teachers.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+  if (document.getElementById('target-audience').value !== 'branch_heads') {
+    select.innerHTML = '<option value="">لكل المدرسين</option>' + window._teacherOptions;
+  }
 }
 
 async function loadMessages() {
@@ -167,8 +205,8 @@ async function loadMessages() {
   const messages = await res.json();
   document.getElementById('messages-body').innerHTML = messages.map(m => `
     <tr>
-      <td>${escapeHtml(m.title)}</td>
-      <td>${m.target_name ? escapeHtml(m.target_name) : 'الكل'}</td>
+      <td>${escapeHtml(m.title)}${m.attachment_path ? ' 📎' : ''}</td>
+      <td>${m.target_audience === 'branch_heads' ? (m.target_branch_head_name ? escapeHtml(m.target_branch_head_name) : 'كل رؤساء الفروع') : (m.target_name ? escapeHtml(m.target_name) : 'كل المدرسين')}${m.department_name ? ' · ' + escapeHtml(m.department_name) : ''}</td>
       <td>${new Date(m.created_at).toLocaleString('ar-EG')}</td>
     </tr>
   `).join('');
@@ -217,21 +255,135 @@ async function deleteTeacher(id) {
 async function sendMessage() {
   const title = document.getElementById('m-title').value.trim();
   const body = document.getElementById('m-body').value.trim();
+  const audience = document.getElementById('target-audience').value;
   const target = document.getElementById('target').value;
+  const department = document.getElementById('m-department').value;
+  const fileInput = document.getElementById('m-attachment');
   const status = document.getElementById('send-status');
   if (!title || !body) { status.innerHTML = '<div class="error">اكتب العنوان والنص</div>'; return; }
 
+  const formData = new FormData();
+  formData.append('title', title);
+  formData.append('body', body);
+  formData.append('target_audience', audience);
+  if (department) formData.append('department_id', department);
+  if (audience === 'teachers' && target) formData.append('target_teacher_id', target);
+  if (audience === 'branch_heads' && target) formData.append('target_branch_head_id', target);
+  if (fileInput.files[0]) formData.append('attachment', fileInput.files[0]);
+
   const res = await fetch('/api/admin/messages', {
-    method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ title, body, target_teacher_id: target || null })
+    method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: formData
   });
   const data = await res.json();
   if (!res.ok) { status.innerHTML = `<div class="error">${data.error}</div>`; return; }
 
-  status.innerHTML = `<div class="pin-box">✅ اتبعتت. وصل إشعار فوري لـ ${data.notified} من ${data.totalTeachers} مدرس.</div>`;
+  status.innerHTML = `<div class="pin-box">✅ اتبعتت. وصل إشعار فوري لـ ${data.notified} من ${data.totalRecipients}.</div>`;
   document.getElementById('m-title').value = '';
   document.getElementById('m-body').value = '';
+  fileInput.value = '';
   loadMessages();
+}
+
+function onAudienceChange() {
+  const audience = document.getElementById('target-audience').value;
+  const targetSelect = document.getElementById('target');
+  if (audience === 'teachers') {
+    targetSelect.innerHTML = '<option value="">لكل المدرسين</option>' + window._teacherOptions;
+  } else {
+    targetSelect.innerHTML = '<option value="">لكل رؤساء الفروع/الأقسام</option>' + window._branchHeadOptions;
+  }
+}
+
+async function loadDepartments() {
+  const res = await fetch('/api/admin/departments', { headers: authHeaders() });
+  const depts = await res.json();
+  const opts = depts.map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('');
+
+  document.getElementById('m-department').innerHTML = '<option value="">بدون تصنيف فرع/قسم</option>' + opts;
+  document.getElementById('bh-department').innerHTML = '<option value="">بدون فرع/قسم محدد</option>' + opts;
+
+  document.getElementById('dept-list').innerHTML = depts.map(d => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:14px;">
+      <span>${escapeHtml(d.name)}</span>
+      <button class="danger" style="padding:4px 10px;font-size:12px" onclick="deleteDepartment(${d.id})">حذف</button>
+    </div>
+  `).join('') || '<div style="color:#94a3b8;font-size:14px">مفيش فروع/أقسام مضافة</div>';
+}
+
+async function addDepartment() {
+  const name = document.getElementById('dept-name').value.trim();
+  if (!name) return;
+  const res = await fetch('/api/admin/departments', {
+    method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ name })
+  });
+  const data = await res.json();
+  if (!res.ok) { alert(data.error); return; }
+  document.getElementById('dept-name').value = '';
+  loadDepartments();
+}
+
+async function deleteDepartment(id) {
+  if (!confirm('حذف الفرع/القسم ده؟')) return;
+  await fetch(`/api/admin/departments/${id}`, { method: 'DELETE', headers: authHeaders() });
+  loadDepartments();
+}
+
+async function loadBranchHeads() {
+  const res = await fetch('/api/admin/branch-heads', { headers: authHeaders() });
+  const heads = await res.json();
+  window._branchHeadOptions = heads.map(h => `<option value="${h.id}">${escapeHtml(h.name)}</option>`).join('');
+
+  document.getElementById('bh-body').innerHTML = heads.map(h => `
+    <tr>
+      <td>${escapeHtml(h.name)}</td>
+      <td>${escapeHtml(h.username)}</td>
+      <td>${h.department_name ? escapeHtml(h.department_name) : '-'}</td>
+      <td>
+        <button class="secondary" onclick="resetBranchHeadPassword(${h.id})">إعادة تعيين الباسورد</button>
+        <button class="danger" onclick="deleteBranchHead(${h.id})">حذف</button>
+      </td>
+    </tr>
+  `).join('');
+
+  if (document.getElementById('target-audience').value === 'branch_heads') onAudienceChange();
+}
+
+async function addBranchHead() {
+  const name = document.getElementById('bh-name').value.trim();
+  const department_id = document.getElementById('bh-department').value;
+  const username = document.getElementById('bh-username').value.trim();
+  const box = document.getElementById('new-bh-box');
+  if (!name) { box.innerHTML = '<div class="error">اكتب الاسم</div>'; return; }
+
+  const res = await fetch('/api/admin/branch-heads', {
+    method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ name, department_id, username })
+  });
+  const data = await res.json();
+  if (!res.ok) { box.innerHTML = `<div class="error">${data.error}</div>`; return; }
+
+  box.innerHTML = `
+    <div class="pin-box">
+      ✅ تم الإنشاء. سلّمه البيانات دي (هتظهر مرة واحدة بس):<br>
+      <b>اليوزر:</b> ${data.username} &nbsp; | &nbsp; <b>الباسورد:</b> ${data.password}
+    </div>`;
+  document.getElementById('bh-name').value = '';
+  document.getElementById('bh-username').value = '';
+  loadBranchHeads();
+}
+
+async function resetBranchHeadPassword(id) {
+  const res = await fetch(`/api/admin/branch-heads/${id}/reset-password`, { method: 'POST', headers: authHeaders() });
+  const data = await res.json();
+  alert('الباسورد الجديد: ' + data.password);
+  loadBranchHeads();
+}
+
+async function deleteBranchHead(id) {
+  if (!confirm('متأكد من حذف رئيس الفرع/القسم ده؟')) return;
+  await fetch(`/api/admin/branch-heads/${id}`, { method: 'DELETE', headers: authHeaders() });
+  loadBranchHeads();
 }
 
 async function changePassword() {

@@ -131,7 +131,8 @@ async function loadMessages() {
     <div class="msg ${m.read_at ? '' : 'unread'}" onclick="markRead(${m.id}, this)">
       <h3>${m.read_at ? '' : '<span class="badge">جديد</span>'}${escapeHtml(m.title)}</h3>
       <p>${escapeHtml(m.body)}</p>
-      <time>${new Date(m.created_at).toLocaleString('ar-EG')}</time>
+      ${m.attachment_path ? `<a href="${m.attachment_path}" target="_blank" style="display:inline-block;margin-top:8px;color:#818cf8;font-size:13px" onclick="event.stopPropagation()">📎 ${escapeHtml(m.attachment_name || 'مرفق')}</a>` : ''}
+      <time>${new Date(m.created_at).toLocaleString('ar-EG')}${m.department_name ? ' · ' + escapeHtml(m.department_name) : ''}</time>
     </div>
   `).join('');
 }

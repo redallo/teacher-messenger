@@ -5,3 +5,5 @@ data.sqlite-journal
 data.sqlite-wal
 data.sqlite-shm
 server.log
+public/uploads/*
+!public/uploads/.gitkeep

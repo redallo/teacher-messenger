@@ -29,10 +29,12 @@ router.post('/subscribe', requireTeacher, (req, res) => {
 // ---------- عرض الرسائل الخاصة بالمدرس ----------
 router.get('/messages', requireTeacher, (req, res) => {
   const messages = db.prepare(`
-    SELECT m.*, r.read_at
+    SELECT m.*, r.read_at, d.name AS department_name
     FROM messages m
     LEFT JOIN message_reads r ON r.message_id = m.id AND r.teacher_id = ?
-    WHERE m.target_teacher_id IS NULL OR m.target_teacher_id = ?
+    LEFT JOIN departments d ON d.id = m.department_id
+    WHERE (m.target_audience IS NULL OR m.target_audience = 'teachers')
+      AND (m.target_teacher_id IS NULL OR m.target_teacher_id = ?)
     ORDER BY m.created_at DESC
   `).all(req.user.id, req.user.id);
   res.json(messages);
